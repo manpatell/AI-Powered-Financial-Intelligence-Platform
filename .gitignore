@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data (keep structure, ignore large files)
+finai/data/raw/*.csv
+finai/data/raw/*.parquet
+finai/data/cache/*.pkl
+finai/data/cache/*.json
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# ChromaDB
+finai/rag/chroma_db/
+
+# Models
+finai/models/saved/*.pkl
+finai/models/saved/*.joblib
+finai/models/saved/*.pt
+finai/models/saved/*.pth
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Claude Code
+.claude/
