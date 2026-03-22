@@ -3,91 +3,66 @@ FinAI — Main Streamlit entry point.
 Run with:  streamlit run finai/dashboard/app.py
 """
 import streamlit as st
+import pandas as pd
+
+from finai.config.settings import DEFAULT_TICKERS
+from finai.data.stock_fetcher import fetch_stock_data
+from finai.dashboard.styles import inject_css, page_header, section_label
 
 st.set_page_config(
     page_title="FinAI Platform",
-    page_icon="📈",
+    page_icon="assets/favicon.ico",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown("""
-<style>
-    /* Sidebar */
-    [data-testid="stSidebar"] { background: #0d1117; }
-    [data-testid="stSidebar"] * { color: #c9d1d9 !important; }
-
-    /* Metric cards */
-    [data-testid="stMetric"] {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        padding: 12px 16px;
-    }
-    [data-testid="stMetricLabel"] { color: #8b949e !important; font-size: 0.8rem; }
-    [data-testid="stMetricValue"] { color: #58a6ff !important; font-size: 1.4rem; }
-
-    /* Header */
-    .main-header {
-        background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
-        border-bottom: 1px solid #21262d;
-        padding: 1rem 0;
-        margin-bottom: 1.5rem;
-    }
-    .signal-buy   { color: #2ea043; font-weight: 700; }
-    .signal-sell  { color: #f85149; font-weight: 700; }
-    .signal-hold  { color: #d29922; font-weight: 700; }
-</style>
-""", unsafe_allow_html=True)
+inject_css()
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/combo-chart.png", width=60)
-    st.title("FinAI Platform")
-    st.caption("AI-Powered Financial Intelligence")
+    st.markdown('<div class="sidebar-brand">FinAI Platform</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-tagline">Financial Intelligence</div>', unsafe_allow_html=True)
     st.divider()
     st.markdown("""
-    **Navigation**
-    - 🏠 Home — Market overview
-    - 📊 Stock Analysis — Deep dive
-    - 🤖 ML Predictions — Model signals
-    - 💬 AI Chatbot — RAG Q&A
-    - 🔬 MLflow Tracker — Experiments
-    - 📉 Monitoring — Drift & health
-    """)
+    <div style="font-size:0.78rem; color:#8B949E; line-height:2;">
+    Home &mdash; Market Overview<br>
+    Stock Analysis &mdash; Price &amp; Indicators<br>
+    ML Predictions &mdash; Model Signals<br>
+    AI Assistant &mdash; RAG Q&amp;A<br>
+    Experiment Tracker &mdash; MLflow<br>
+    Monitoring &mdash; Drift &amp; Health
+    </div>
+    """, unsafe_allow_html=True)
     st.divider()
-    st.caption("v1.0.0 · manpatell")
+    st.markdown('<div style="font-size:0.72rem;color:#484F58;">v1.0.0 &nbsp;&middot;&nbsp; manpatell</div>',
+                unsafe_allow_html=True)
 
-# ── Home Page ─────────────────────────────────────────────────────────────────
-st.markdown('<div class="main-header">', unsafe_allow_html=True)
-st.title("📈 FinAI — Financial Intelligence Platform")
-st.markdown("*Real-time stock analysis · ML predictions · RAG-powered insights · MLOps monitoring*")
-st.markdown('</div>', unsafe_allow_html=True)
+# ── Header ────────────────────────────────────────────────────────────────────
+page_header(
+    "FinAI — Financial Intelligence Platform",
+    "Real-time stock analysis &nbsp;&middot;&nbsp; ML predictions &nbsp;&middot;&nbsp; "
+    "RAG-powered insights &nbsp;&middot;&nbsp; MLOps monitoring",
+)
 
-# Quick stats row
-from finai.config.settings import DEFAULT_TICKERS
-from finai.data.stock_fetcher import fetch_stock_data
-import pandas as pd
-
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Tickers Tracked",  str(len(DEFAULT_TICKERS)), "Active")
-col2.metric("ML Models",        "2",   "XGB + LGBM")
-col3.metric("RAG Knowledge Base","ChromaDB", "Persistent")
-col4.metric("Experiment Tracking","MLflow",  "Auto-logged")
+# ── Platform stats ────────────────────────────────────────────────────────────
+section_label("Platform Overview")
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Tickers Tracked",     str(len(DEFAULT_TICKERS)))
+c2.metric("ML Models",           "XGBoost + LightGBM")
+c3.metric("Vector Store",        "ChromaDB")
+c4.metric("Experiment Tracking", "MLflow")
 
 st.divider()
 
-# Market snapshot
-st.subheader("⚡ Market Snapshot")
-st.caption("Live prices via yfinance — click a ticker in the sidebar pages for deep analysis")
+# ── Market snapshot ───────────────────────────────────────────────────────────
+section_label("Market Snapshot — Live Prices")
+st.caption("Prices sourced via yfinance · 4-hour cache")
 
 tickers_to_show = DEFAULT_TICKERS[:6]
-snapshot_cols = st.columns(len(tickers_to_show))
-
-for col, ticker in zip(snapshot_cols, tickers_to_show):
+cols = st.columns(len(tickers_to_show))
+for col, ticker in zip(cols, tickers_to_show):
     try:
-        df = fetch_stock_data(ticker, period="5d", use_cache=True)
+        df     = fetch_stock_data(ticker, period="5d", use_cache=True)
         latest = float(df["Close"].iloc[-1])
         prev   = float(df["Close"].iloc[-2])
         delta  = (latest - prev) / prev * 100
@@ -97,19 +72,20 @@ for col, ticker in zip(snapshot_cols, tickers_to_show):
 
 st.divider()
 
-st.info(
-    "👈 **Use the sidebar** to navigate to Stock Analysis, ML Predictions, "
-    "the AI Chatbot, MLflow Tracker, or Model Monitoring."
-)
-
+# ── Module index ──────────────────────────────────────────────────────────────
+section_label("Modules")
 st.markdown("""
-### About this Platform
-
 | Module | Description |
-|--------|-------------|
-| **Stock Analysis** | Interactive OHLCV charts, technical indicators, volume profile |
-| **ML Predictions** | XGBoost / LightGBM 5-day directional signals with confidence |
-| **AI Chatbot** | RAG-powered Q&A grounded in live news and company profiles |
-| **MLflow Tracker** | Experiment comparison, metric history, feature importance |
-| **Model Monitoring** | Data drift detection (Evidently AI), prediction stability |
+|---|---|
+| **Stock Analysis** | Candlestick chart, Bollinger Bands, SMA/EMA, RSI, MACD, volume bars, live news feed |
+| **ML Predictions** | Train XGBoost / LightGBM on demand; buy / hold / sell signal overlay; feature importance |
+| **AI Assistant** | RAG-powered Q&A backed by ChromaDB; grounded in real news and company profiles |
+| **Experiment Tracker** | MLflow run browser; metric comparison charts; Model Registry |
+| **Monitoring** | Per-feature KS-test and PSI drift detection; rolling accuracy / ROC-AUC history |
 """)
+
+st.divider()
+st.markdown(
+    '<div style="font-size:0.78rem;color:#8B949E;">Use the sidebar to navigate between modules.</div>',
+    unsafe_allow_html=True,
+)
