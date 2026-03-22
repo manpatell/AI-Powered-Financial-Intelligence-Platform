@@ -11,7 +11,7 @@ from sklearn.preprocessing import RobustScaler
 
 from finai.config.settings import PROCESSED_DIR, MODELS_DIR, PREDICTION_HORIZON
 from finai.data.stock_fetcher import fetch_stock_data
-from finai.data.news_fetcher import fetch_all_news, get as _ticker_name
+from finai.data.news_fetcher import fetch_all_news
 from finai.features.technical_indicators import add_technical_indicators, add_target, get_feature_columns
 from finai.features.sentiment_features import merge_sentiment_features
 from finai.utils.logger import get_logger
