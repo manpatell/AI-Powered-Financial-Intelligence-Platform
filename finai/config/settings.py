@@ -28,7 +28,11 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", str(ROOT_DIR / "mlruns"))
 MLFLOW_EXPERIMENT_NAME = "finai-stock-prediction"
 
-# ── Data ───────────────────────────────────────────────────────────────────────
+# ── Cache ──────────────────────────────────────────────────────────────────────
+STOCK_CACHE_TTL_HOURS = int(os.getenv("STOCK_CACHE_TTL_HOURS", "4"))
+NEWS_CACHE_TTL_HOURS  = int(os.getenv("NEWS_CACHE_TTL_HOURS",  "2"))
+
+
 DEFAULT_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "JPM", "NFLX", "AMD"]
 DEFAULT_PERIOD = "2y"        # yfinance period
 DEFAULT_INTERVAL = "1d"      # daily candles

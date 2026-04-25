@@ -12,7 +12,7 @@ import feedparser
 import pandas as pd
 import requests
 
-from finai.config.settings import CACHE_DIR, NEWS_API_KEY
+from finai.config.settings import CACHE_DIR, NEWS_API_KEY, NEWS_CACHE_TTL_HOURS
 from finai.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -72,7 +72,7 @@ def _parse_rss(url: str, ticker: str) -> list[dict]:
 def fetch_news_rss(ticker: str, use_cache: bool = True) -> pd.DataFrame:
     """Fetch news for a ticker from Yahoo Finance RSS."""
     cache = _cache_path(ticker)
-    if use_cache and _is_fresh(cache):
+    if use_cache and _is_fresh(cache, hours=NEWS_CACHE_TTL_HOURS):
         with open(cache, "rb") as f:
             return pickle.load(f)
 

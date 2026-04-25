@@ -12,7 +12,7 @@ from typing import Optional
 import pandas as pd
 import yfinance as yf
 
-from finai.config.settings import CACHE_DIR, DEFAULT_INTERVAL, DEFAULT_PERIOD, RAW_DIR
+from finai.config.settings import CACHE_DIR, DEFAULT_INTERVAL, DEFAULT_PERIOD, RAW_DIR, STOCK_CACHE_TTL_HOURS
 from finai.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -46,7 +46,7 @@ def fetch_stock_data(
     """
     cache_path = _cache_key(ticker, period, interval)
 
-    if use_cache and _is_cache_fresh(cache_path):
+    if use_cache and _is_cache_fresh(cache_path, max_age_hours=STOCK_CACHE_TTL_HOURS):
         logger.debug(f"Cache hit for {ticker}")
         with open(cache_path, "rb") as f:
             return pickle.load(f)
