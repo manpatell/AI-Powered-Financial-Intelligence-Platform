@@ -104,8 +104,9 @@ if show_bb and "bb_upper" in df.columns:
 # RSI panel
 rsi_row = 2
 if show_rsi and "rsi_14" in df.columns:
+    rsi_display = df["rsi_14"] * 100     # stored as 0–1; display as 0–100
     fig.add_trace(go.Scatter(
-        x=df.index, y=df["rsi_14"], name="RSI 14",
+        x=df.index, y=rsi_display, name="RSI 14",
         line=dict(color="#D29922", width=1.5),
     ), row=rsi_row, col=1)
     fig.add_hrect(y0=70, y1=100, fillcolor="rgba(248,81,73,0.05)",

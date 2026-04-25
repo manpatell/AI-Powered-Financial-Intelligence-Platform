@@ -59,20 +59,25 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     for w in [10, 20, 50]:
         sma = SMAIndicator(close, window=w).sma_indicator()
         df[f"sma{w}_ratio"] = close / sma - 1          # positive = above MA
+        df[f"sma_{w}"] = sma                            # absolute price level for charting
 
     for w in [10, 20]:
         ema = EMAIndicator(close, window=w).ema_indicator()
         df[f"ema{w}_ratio"] = close / ema - 1
+        df[f"ema_{w}"] = ema                            # absolute price level for charting
 
     # SMA slope (rate of change of MA)
-    sma20 = SMAIndicator(close, window=20).sma_indicator()
+    sma20 = df["sma_20"]
     df["sma20_slope"] = sma20.pct_change(5)
 
-    # ── MACD (normalised by Close) ────────────────────────────────────────────
+    # ── MACD (normalised by Close + absolute for charting) ────────────────────
     macd_ind = MACD(close, window_slow=26, window_fast=12, window_sign=9)
-    df["macd_ratio"]   = macd_ind.macd()        / close
-    df["macd_sig_ratio"] = macd_ind.macd_signal() / close
-    df["macd_diff_ratio"]= macd_ind.macd_diff()  / close
+    df["macd_ratio"]      = macd_ind.macd()        / close
+    df["macd_sig_ratio"]  = macd_ind.macd_signal() / close
+    df["macd_diff_ratio"] = macd_ind.macd_diff()   / close
+    df["macd"]            = macd_ind.macd()         # absolute value for charting
+    df["macd_signal"]     = macd_ind.macd_signal()  # absolute value for charting
+    df["macd_diff"]       = macd_ind.macd_diff()    # absolute value for charting
 
     # ── Momentum ──────────────────────────────────────────────────────────────
     df["rsi_14"]  = RSIIndicator(close, window=14).rsi() / 100   # normalise 0–1
@@ -94,8 +99,10 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
 
     # ── Volatility ────────────────────────────────────────────────────────────
     bb = BollingerBands(close, window=20, window_dev=2)
-    df["bb_pct"]   = bb.bollinger_pband()    # position 0–1 within band
-    df["bb_width"] = bb.bollinger_wband() / close    # width normalised
+    df["bb_pct"]   = bb.bollinger_pband()             # position 0–1 within band
+    df["bb_width"] = bb.bollinger_wband() / close     # width normalised
+    df["bb_upper"] = bb.bollinger_hband()             # absolute upper band for charting
+    df["bb_lower"] = bb.bollinger_lband()             # absolute lower band for charting
 
     df["atr_ratio"] = (
         AverageTrueRange(high, low, close, window=14).average_true_range() / close
@@ -159,6 +166,12 @@ def add_target(df: pd.DataFrame, horizon: int = 5,
 
 
 def get_feature_columns(df: pd.DataFrame) -> list[str]:
-    """Return feature column names (excludes OHLCV, ticker, target)."""
-    exclude = {"Open", "High", "Low", "Close", "Volume", "ticker", "target"}
+    """Return feature column names (excludes OHLCV, ticker, target, and chart-only columns)."""
+    exclude = {
+        "Open", "High", "Low", "Close", "Volume", "ticker", "target",
+        # Chart-only absolute-price columns (not normalised — excluded from ML features)
+        "sma_10", "sma_20", "sma_50", "ema_10", "ema_20",
+        "bb_upper", "bb_lower",
+        "macd", "macd_signal", "macd_diff",
+    }
     return [c for c in df.columns if c not in exclude]
