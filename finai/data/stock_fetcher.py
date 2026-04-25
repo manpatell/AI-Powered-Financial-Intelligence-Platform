@@ -4,6 +4,7 @@ Handles downloading, caching, and validation of OHLCV data.
 """
 import hashlib
 import pickle
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
@@ -15,6 +16,9 @@ from finai.config.settings import CACHE_DIR, DEFAULT_INTERVAL, DEFAULT_PERIOD, R
 from finai.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+_RETRY_ATTEMPTS = 3
+_RETRY_DELAY_S  = 2.0  # seconds between retries
 
 
 def _cache_key(ticker: str, period: str, interval: str) -> Path:
@@ -48,33 +52,40 @@ def fetch_stock_data(
             return pickle.load(f)
 
     logger.info(f"Fetching {ticker} ({period}, {interval})")
-    try:
-        df = yf.download(ticker, period=period, interval=interval, progress=False, auto_adjust=True)
-        if df.empty:
-            raise ValueError(f"No data returned for {ticker}")
+    last_exc: Exception = RuntimeError("No attempts made")
+    for attempt in range(1, _RETRY_ATTEMPTS + 1):
+        try:
+            df = yf.download(ticker, period=period, interval=interval, progress=False, auto_adjust=True)
+            if df.empty:
+                raise ValueError(f"No data returned for {ticker}")
 
-        # Flatten MultiIndex columns if present
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
+            # Flatten MultiIndex columns if present
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
 
-        df.index = pd.to_datetime(df.index)
-        df.index.name = "Date"
-        df["ticker"] = ticker
+            df.index = pd.to_datetime(df.index)
+            df.index.name = "Date"
+            df["ticker"] = ticker
 
-        # Save raw copy
-        raw_path = RAW_DIR / f"{ticker}_{period}_{interval}.parquet"
-        df.to_parquet(raw_path)
+            # Save raw copy
+            raw_path = RAW_DIR / f"{ticker}_{period}_{interval}.parquet"
+            df.to_parquet(raw_path)
 
-        # Cache
-        with open(cache_path, "wb") as f:
-            pickle.dump(df, f)
+            # Cache
+            with open(cache_path, "wb") as f:
+                pickle.dump(df, f)
 
-        logger.info(f"Downloaded {len(df)} rows for {ticker}")
-        return df
+            logger.info(f"Downloaded {len(df)} rows for {ticker}")
+            return df
 
-    except Exception as e:
-        logger.error(f"Failed to fetch {ticker}: {e}")
-        raise
+        except Exception as e:
+            last_exc = e
+            if attempt < _RETRY_ATTEMPTS:
+                logger.warning(f"Fetch attempt {attempt}/{_RETRY_ATTEMPTS} failed for {ticker}: {e}. Retrying in {_RETRY_DELAY_S}s…")
+                time.sleep(_RETRY_DELAY_S)
+
+    logger.error(f"All {_RETRY_ATTEMPTS} fetch attempts failed for {ticker}: {last_exc}")
+    raise last_exc
 
 
 def fetch_multiple_tickers(
