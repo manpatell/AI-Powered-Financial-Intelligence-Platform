@@ -1,5 +1,6 @@
 """Central configuration for FinAI platform."""
 import os
+import warnings
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -19,14 +20,39 @@ LOGS_DIR = ROOT_DIR / "logs"
 for d in [RAW_DIR, PROCESSED_DIR, CACHE_DIR, MODELS_DIR, CHROMA_DIR, LOGS_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
+# ── Environment ───────────────────────────────────────────────────────────────
+_VALID_ENVS = {"development", "staging", "production"}
+APP_ENV = os.getenv("APP_ENV", "development").lower()
+if APP_ENV not in _VALID_ENVS:
+    warnings.warn(
+        f"APP_ENV='{APP_ENV}' is not recognized. Valid values: {sorted(_VALID_ENVS)}. "
+        "Defaulting to 'development'.",
+        stacklevel=1,
+    )
+    APP_ENV = "development"
+
 # ── API Keys ───────────────────────────────────────────────────────────────────
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 
+# Warn in production if no LLM key is configured
+if APP_ENV == "production" and not OPENAI_API_KEY and not ANTHROPIC_API_KEY:
+    warnings.warn(
+        "Running in production without an LLM API key. "
+        "The AI Chatbot will return raw context only. "
+        "Set OPENAI_API_KEY or ANTHROPIC_API_KEY to enable LLM answers.",
+        stacklevel=1,
+    )
+
 # ── MLflow ─────────────────────────────────────────────────────────────────────
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", str(ROOT_DIR / "mlruns"))
 MLFLOW_EXPERIMENT_NAME = "finai-stock-prediction"
+
+# ── Cache ──────────────────────────────────────────────────────────────────────
+STOCK_CACHE_TTL_HOURS = int(os.getenv("STOCK_CACHE_TTL_HOURS", "4"))
+NEWS_CACHE_TTL_HOURS  = int(os.getenv("NEWS_CACHE_TTL_HOURS",  "2"))
+
 
 # ── Data ───────────────────────────────────────────────────────────────────────
 DEFAULT_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "JPM", "NFLX", "AMD"]
