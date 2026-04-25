@@ -25,7 +25,7 @@ _VALID_ENVS = {"development", "staging", "production"}
 APP_ENV = os.getenv("APP_ENV", "development").lower()
 if APP_ENV not in _VALID_ENVS:
     warnings.warn(
-        f"APP_ENV='{APP_ENV}' is not recognised. Valid values: {sorted(_VALID_ENVS)}. "
+        f"APP_ENV='{APP_ENV}' is not recognized. Valid values: {sorted(_VALID_ENVS)}. "
         "Defaulting to 'development'.",
         stacklevel=1,
     )
