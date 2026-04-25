@@ -93,15 +93,41 @@ def fetch_multiple_tickers(
     period: str = DEFAULT_PERIOD,
     interval: str = DEFAULT_INTERVAL,
     use_cache: bool = True,
+    max_workers: int = 4,
 ) -> dict[str, pd.DataFrame]:
-    """Fetch data for multiple tickers; returns {ticker: df} dict."""
-    results = {}
-    failed = []
-    for ticker in tickers:
-        try:
-            results[ticker] = fetch_stock_data(ticker, period, interval, use_cache)
-        except Exception:
-            failed.append(ticker)
+    """
+    Fetch data for multiple tickers concurrently using a thread pool.
+
+    Parameters
+    ----------
+    tickers     : List of ticker symbols.
+    period      : yfinance period string (e.g. "2y").
+    interval    : yfinance interval string (e.g. "1d").
+    use_cache   : Whether to use the on-disk pickle cache.
+    max_workers : Maximum number of parallel download threads.
+
+    Returns
+    -------
+    dict mapping ticker → DataFrame; failed tickers are omitted.
+    """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    results: dict[str, pd.DataFrame] = {}
+    failed: list[str] = []
+
+    def _fetch(t: str) -> tuple[str, pd.DataFrame]:
+        return t, fetch_stock_data(t, period, interval, use_cache)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_fetch, t): t for t in tickers}
+        for future in as_completed(futures):
+            ticker = futures[future]
+            try:
+                _, df = future.result()
+                results[ticker] = df
+            except Exception:
+                failed.append(ticker)
+
     if failed:
         logger.warning(f"Failed tickers: {failed}")
     return results
