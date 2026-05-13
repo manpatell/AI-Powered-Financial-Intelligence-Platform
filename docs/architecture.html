@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinAI — Technical Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --blue:     #58a6ff;
+      --green:    #3fb950;
+      --orange:   #d29922;
+      --purple:   #bc8cff;
+      --red:      #f85149;
+      --teal:     #39d353;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      color: var(--muted);
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    /* ── LAYER GRID ─────────────────────────────── */
+    .layers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .layer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .layer::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .layer.ext::before      { background: var(--blue); }
+    .layer.ingestion::before { background: var(--green); }
+    .layer.storage::before  { background: var(--orange); }
+    .layer.features::before { background: var(--purple); }
+    .layer.ml::before       { background: var(--red); }
+    .layer.mlops::before    { background: var(--teal); }
+    .layer.rag::before      { background: #a78bfa; }
+    .layer.monitor::before  { background: #fbbf24; }
+    .layer.dash::before     { background: #34d399; }
+    .layer.cfg::before      { background: var(--muted); }
+
+    .layer h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.85rem;
+      font-weight: 600;
+    }
+
+    .layer.ext h3      { color: var(--blue); }
+    .layer.ingestion h3 { color: var(--green); }
+    .layer.storage h3  { color: var(--orange); }
+    .layer.features h3 { color: var(--purple); }
+    .layer.ml h3       { color: var(--red); }
+    .layer.mlops h3    { color: var(--teal); }
+    .layer.rag h3      { color: #a78bfa; }
+    .layer.monitor h3  { color: #fbbf24; }
+    .layer.dash h3     { color: #34d399; }
+    .layer.cfg h3      { color: var(--muted); }
+
+    .components {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .component {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+    }
+
+    .component .name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .component .desc {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-right: 0.3rem;
+      margin-top: 0.25rem;
+      font-weight: 500;
+    }
+
+    /* ── FLOW DIAGRAM ──────────────────────────── */
+    .diagram-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      overflow-x: auto;
+    }
+
+    .diagram-section h2 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── FLOW TABLE ────────────────────────────── */
+    .flow-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .flow-table h2 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid rgba(48,54,61,0.5);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.78rem;
+      background: rgba(110,118,129,0.15);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      color: var(--blue);
+    }
+
+    /* ── DATA FLOW PIPELINE ────────────────────── */
+    .pipeline {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .pipeline h2 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .pipeline-flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pipe-step {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .pipe-step .icon { font-size: 1.3rem; }
+    .pipe-step .label { font-size: 0.78rem; font-weight: 600; margin-top: 0.25rem; }
+    .pipe-step .sub   { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .pipe-arrow {
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>FinAI — AI-Powered Financial Intelligence Platform</h1>
+  <p>Technical Architecture · End-to-end MLOps + RAG + Real-time Dashboard</p>
+</header>
+
+<!-- ── MERMAID DIAGRAM ─────────────────────────── -->
+<div class="diagram-section">
+  <h2>System Architecture Diagram</h2>
+  <div class="mermaid">
+flowchart TB
+    subgraph EXT["External Data Sources"]
+        YF["Yahoo Finance\nyfinance — OHLCV"]
+        NA["NewsAPI\nFinancial Headlines"]
+        RSS["RSS Feeds\nNews Streams"]
+    end
+
+    subgraph ING["Data Ingestion  finai/data/"]
+        SF["stock_fetcher.py\n4h cache · retry 3×\nParquet persist"]
+        NF["news_fetcher.py\nRSS + NewsAPI\n2h cache · dedup"]
+    end
+
+    subgraph STORE["Local Storage"]
+        CACHE["Cache\npickle TTL"]
+        RAW["Raw Store\nParquet"]
+        PROC["Feature Store\nParquet"]
+        MSTORE["Model Store\njoblib .pkl"]
+        CHROMA["ChromaDB\nVector Store"]
+    end
+
+    subgraph FE["Feature Engineering  finai/features/"]
+        TI["technical_indicators.py\nRSI · MACD · BBands · ATR\nOBV · VWAP · Stochastic\nROC · SMA/EMA · HV"]
+        SENT["sentiment_features.py\nFinBERT + VADER fallback\nPer-ticker daily agg"]
+        FP["feature_pipeline.py\nOrchestrator"]
+        SC["RobustScaler\nscikit-learn"]
+    end
+
+    subgraph ML["ML Pipeline  finai/models/"]
+        XGB["XGBoost Classifier\nBinary · class-weighted\nearly stopping"]
+        LGBM["LightGBM Classifier\nBinary · class-weighted\nearly stopping"]
+        OPT["Optuna\n30 trials · TPE sampler"]
+        ENS["Soft-Voting Ensemble\nXGBoost + LightGBM"]
+        TSCV["TimeSeriesSplit CV\n5 folds · leak-free"]
+        PRED["predictor.py\nBUY / HOLD / SELL\nProbability scores"]
+    end
+
+    subgraph MLOPS["MLOps  MLflow"]
+        MLF["Tracking Server\nport 5000\nparams · metrics · artifacts"]
+        REG["Model Registry\nVersioned promotion"]
+    end
+
+    subgraph RAG["RAG Pipeline  finai/rag/"]
+        EMB["Sentence Transformers\nall-MiniLM-L6-v2\n384-dim vectors"]
+        DS["document_store.py\nChromaDB · cosine sim\ntop-K retrieval"]
+        CHAIN["rag_chain.py\ntop-5 context\ncitation assembly"]
+        LLM["LLM Backends\nOpenAI GPT-4o-mini\nAnthropic Claude fallback"]
+    end
+
+    subgraph MON["Monitoring  finai/monitoring/"]
+        DD["drift_detector.py\nKS-test p<0.05\nPSI bins=10"]
+        PT["performance_tracker.py\nRolling accuracy + AUC"]
+    end
+
+    subgraph DASH["Streamlit Dashboard  port 8501"]
+        HOME["Home\nMarket Snapshot"]
+        P1["Stock Analysis\nCandlestick + indicators"]
+        P2["ML Predictions\nSignals + feature imp."]
+        P3["AI Chatbot\nRAG Q&A + citations"]
+        P4["MLflow Tracker\nRuns + Model Registry"]
+        P5["Monitoring\nDrift + Performance"]
+    end
+
+    YF -->|OHLCV| SF
+    NA -->|headlines| NF
+    RSS -->|articles| NF
+    SF <-->|TTL| CACHE
+    SF -->|persist| RAW
+    RAW --> FP
+    NF --> FP
+    FP --> TI & SENT
+    TI & SENT --> FP
+    FP --> SC --> PROC
+    PROC --> TSCV
+    TSCV --> XGB & LGBM
+    OPT -->|best params| XGB & LGBM
+    XGB & LGBM --> ENS
+    ENS -->|serialize| MSTORE
+    XGB & LGBM -->|log| MLF
+    MLF --> REG
+    MSTORE -->|load| PRED
+    PROC -->|features| PRED
+    NF -->|articles| EMB --> DS
+    DS <-->|read/write| CHROMA
+    DS -->|context| CHAIN
+    PRED -->|signals| CHAIN
+    CHAIN --> LLM --> CHAIN
+    PROC --> DD
+    PRED --> PT
+    SF --> P1
+    TI --> P1
+    NF --> P1
+    PRED --> P2
+    MLF --> P4
+    REG --> P4
+    CHAIN --> P3
+    DD --> P5
+    PT --> P5
+    HOME --- P1 & P2 & P3 & P4 & P5
+  </div>
+</div>
+
+<!-- ── LAYER CARDS ──────────────────────────────── -->
+<div class="layers">
+
+  <div class="layer ext">
+    <h3>🌐 External Data Sources</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">Yahoo Finance (yfinance)</div>
+        <div class="desc">Real-time OHLCV data · 10 default tickers (AAPL, MSFT, GOOGL, AMZN, TSLA…)</div>
+      </div>
+      <div class="component">
+        <div class="name">NewsAPI</div>
+        <div class="desc">Financial headlines via REST API · 2 h cache TTL</div>
+      </div>
+      <div class="component">
+        <div class="name">RSS Feeds</div>
+        <div class="desc">Multiple financial news streams · URL-level deduplication</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer ingestion">
+    <h3>📥 Data Ingestion  ·  finai/data/</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">stock_fetcher.py</div>
+        <div class="desc">4 h disk cache · retry logic (3×) · Parquet persistence</div>
+        <span class="tag" style="background:#1a3d2b;color:#3dba6f">yfinance</span>
+        <span class="tag" style="background:#1a3d2b;color:#3dba6f">pickle cache</span>
+      </div>
+      <div class="component">
+        <div class="name">news_fetcher.py</div>
+        <div class="desc">RSS + NewsAPI fusion · 2 h cache · deduplication by URL hash</div>
+        <span class="tag" style="background:#1a3d2b;color:#3dba6f">feedparser</span>
+        <span class="tag" style="background:#1a3d2b;color:#3dba6f">requests</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer storage">
+    <h3>🗄️ Storage</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">Cache Store</div>
+        <div class="desc">Pickle files with TTL awareness — eliminates redundant API calls</div>
+      </div>
+      <div class="component">
+        <div class="name">Raw Data Store</div>
+        <div class="desc">Parquet files — columnar OHLCV storage per ticker</div>
+      </div>
+      <div class="component">
+        <div class="name">Processed Feature Store</div>
+        <div class="desc">Scaled features + targets in Parquet — training-ready</div>
+      </div>
+      <div class="component">
+        <div class="name">Model Store</div>
+        <div class="desc">joblib-serialized XGBoost/LightGBM models + RobustScaler</div>
+      </div>
+      <div class="component">
+        <div class="name">ChromaDB Vector Store</div>
+        <div class="desc">Persistent cosine-similarity index for RAG semantic search</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer features">
+    <h3>⚙️ Feature Engineering  ·  finai/features/</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">technical_indicators.py</div>
+        <div class="desc">25+ indicators: RSI · MACD · Bollinger Bands · ATR · OBV · VWAP · Stochastic · ROC · SMA/EMA (10/20/50) · Historical Volatility</div>
+      </div>
+      <div class="component">
+        <div class="name">sentiment_features.py</div>
+        <div class="desc">FinBERT (HuggingFace Transformers) → VADER fallback · per-ticker daily aggregation</div>
+      </div>
+      <div class="component">
+        <div class="name">feature_pipeline.py</div>
+        <div class="desc">End-to-end orchestrator: fetch → indicators → sentiment → target label → scale → persist</div>
+      </div>
+      <div class="component">
+        <div class="name">RobustScaler</div>
+        <div class="desc">scikit-learn · fit on train split only · applied to test (prevents leakage)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer ml">
+    <h3>🤖 ML Pipeline  ·  finai/models/</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">XGBoost Classifier</div>
+        <div class="desc">Binary classification (price up/down) · class-weight balancing · early stopping on eval set</div>
+      </div>
+      <div class="component">
+        <div class="name">LightGBM Classifier</div>
+        <div class="desc">Binary classification · class-weight balancing · early stopping</div>
+      </div>
+      <div class="component">
+        <div class="name">Optuna Hyperparameter Tuning</div>
+        <div class="desc">30 trials per model · TPE sampler · maximises validation AUC</div>
+      </div>
+      <div class="component">
+        <div class="name">Soft-Voting Ensemble</div>
+        <div class="desc">Averages XGBoost + LightGBM class probabilities → final signal</div>
+      </div>
+      <div class="component">
+        <div class="name">TimeSeriesSplit CV</div>
+        <div class="desc">5 folds · no shuffle · preserves temporal order · zero future leakage</div>
+      </div>
+      <div class="component">
+        <div class="name">predictor.py</div>
+        <div class="desc">Inference pipeline → probability scores → BUY / HOLD / SELL signals</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer mlops">
+    <h3>📊 MLOps  ·  MLflow</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">MLflow Tracking Server  (port 5000)</div>
+        <div class="desc">Logs params · metrics · feature importance · classification reports · model artifacts per run</div>
+      </div>
+      <div class="component">
+        <div class="name">MLflow Model Registry</div>
+        <div class="desc">Versioned model promotion: Staging → Production workflow</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer rag">
+    <h3>🧠 RAG Pipeline  ·  finai/rag/</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">Sentence Transformers</div>
+        <div class="desc">all-MiniLM-L6-v2 · 384-dim dense embeddings for news documents</div>
+      </div>
+      <div class="component">
+        <div class="name">document_store.py</div>
+        <div class="desc">ChromaDB persistence · cosine similarity · URL deduplication · top-K retrieval</div>
+      </div>
+      <div class="component">
+        <div class="name">rag_chain.py</div>
+        <div class="desc">Retrieves top-5 context docs · assembles prompt · extracts citations from LLM response</div>
+      </div>
+      <div class="component">
+        <div class="name">LLM Backends</div>
+        <div class="desc">Primary: OpenAI GPT-4o-mini · Fallback: Anthropic Claude · Offline: context-only mode</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer monitor">
+    <h3>🔍 Monitoring  ·  finai/monitoring/</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">drift_detector.py</div>
+        <div class="desc">KS-test (p &lt; 0.05 threshold) · PSI score (bins=10) · moderate &gt;0.1, significant &gt;0.2 · per-feature report</div>
+      </div>
+      <div class="component">
+        <div class="name">performance_tracker.py</div>
+        <div class="desc">Rolling accuracy snapshots · ROC-AUC over time · prediction history log</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer dash">
+    <h3>🖥️ Streamlit Dashboard  ·  port 8501</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">Home — Market Snapshot</div>
+        <div class="desc">Live overview of all 10 tracked tickers with key metrics</div>
+      </div>
+      <div class="component">
+        <div class="name">Stock Analysis</div>
+        <div class="desc">Candlestick · SMA/EMA overlays · Bollinger Bands · RSI · MACD · Volume · News feed</div>
+      </div>
+      <div class="component">
+        <div class="name">ML Predictions</div>
+        <div class="desc">On-demand model training · signal overlay chart · probability histogram · feature importance</div>
+      </div>
+      <div class="component">
+        <div class="name">AI Chatbot</div>
+        <div class="desc">RAG-powered Q&amp;A interface with source citations from ingested news</div>
+      </div>
+      <div class="component">
+        <div class="name">MLflow Tracker</div>
+        <div class="desc">Experiment run browser · metric time-series charts · Model Registry browser</div>
+      </div>
+      <div class="component">
+        <div class="name">Monitoring</div>
+        <div class="desc">Per-feature drift report · PSI bar chart · rolling performance history</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer cfg">
+    <h3>🔧 Cross-Cutting</h3>
+    <div class="components">
+      <div class="component">
+        <div class="name">config/settings.py</div>
+        <div class="desc">Pydantic config · .env loading · API keys · directory paths · default tickers · prediction horizon</div>
+      </div>
+      <div class="component">
+        <div class="name">utils/logger.py</div>
+        <div class="desc">loguru structured logging · file rotation · used across all layers</div>
+      </div>
+      <div class="component">
+        <div class="name">GitHub Actions CI</div>
+        <div class="desc">pytest on Python 3.11 &amp; 3.12 · triggered on push/PR to main</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── DATA FLOW PIPELINE ─────────────────────────── -->
+<div class="pipeline">
+  <h2>End-to-End Data Flow</h2>
+  <div class="pipeline-flow">
+    <div class="pipe-step">
+      <div class="icon">🌐</div>
+      <div class="label">External APIs</div>
+      <div class="sub">yfinance · NewsAPI · RSS</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="icon">📥</div>
+      <div class="label">Ingestion + Cache</div>
+      <div class="sub">TTL-aware · retry logic</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="icon">⚙️</div>
+      <div class="label">Feature Engineering</div>
+      <div class="sub">25 indicators + FinBERT</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="icon">📊</div>
+      <div class="label">Feature Store</div>
+      <div class="sub">Scaled Parquet</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="icon">🤖</div>
+      <div class="label">ML Training</div>
+      <div class="sub">XGB + LGBM + Optuna</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="icon">📈</div>
+      <div class="label">Signals</div>
+      <div class="sub">BUY / HOLD / SELL</div>
+    </div>
+    <div class="pipe-arrow">↘</div>
+    <div class="pipe-step">
+      <div class="icon">🧠</div>
+      <div class="label">RAG Chain</div>
+      <div class="sub">ChromaDB + LLM</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">
+      <div class="icon">🖥️</div>
+      <div class="label">Dashboard</div>
+      <div class="sub">Streamlit port 8501</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── COMPONENT REFERENCE TABLE ──────────────────── -->
+<div class="flow-table">
+  <h2>Component Reference</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Layer</th>
+        <th>Module</th>
+        <th>Key Responsibility</th>
+        <th>Technology</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Data Ingestion</td>
+        <td><code>finai/data/stock_fetcher.py</code></td>
+        <td>OHLCV download with 4 h TTL cache &amp; retry</td>
+        <td>yfinance, pickle</td>
+      </tr>
+      <tr>
+        <td>Data Ingestion</td>
+        <td><code>finai/data/news_fetcher.py</code></td>
+        <td>RSS + NewsAPI aggregation with URL deduplication</td>
+        <td>feedparser, requests</td>
+      </tr>
+      <tr>
+        <td>Feature Eng.</td>
+        <td><code>finai/features/technical_indicators.py</code></td>
+        <td>25+ indicators (RSI, MACD, BBands, ATR…)</td>
+        <td>ta, pandas, numpy</td>
+      </tr>
+      <tr>
+        <td>Feature Eng.</td>
+        <td><code>finai/features/sentiment_features.py</code></td>
+        <td>FinBERT sentiment → per-ticker daily scores</td>
+        <td>transformers, torch</td>
+      </tr>
+      <tr>
+        <td>Feature Eng.</td>
+        <td><code>finai/features/feature_pipeline.py</code></td>
+        <td>End-to-end pipeline orchestrator</td>
+        <td>pandas, scikit-learn</td>
+      </tr>
+      <tr>
+        <td>ML Models</td>
+        <td><code>finai/models/trainer.py</code></td>
+        <td>XGBoost + LightGBM + Optuna + MLflow logging</td>
+        <td>xgboost, lightgbm, optuna, mlflow</td>
+      </tr>
+      <tr>
+        <td>ML Models</td>
+        <td><code>finai/models/predictor.py</code></td>
+        <td>Inference → BUY / HOLD / SELL signals</td>
+        <td>joblib, xgboost, lightgbm</td>
+      </tr>
+      <tr>
+        <td>MLOps</td>
+        <td>MLflow Tracking Server</td>
+        <td>Experiment runs, params, metrics, artifacts</td>
+        <td>mlflow 2.20.2</td>
+      </tr>
+      <tr>
+        <td>RAG</td>
+        <td><code>finai/rag/document_store.py</code></td>
+        <td>ChromaDB vector store + semantic search</td>
+        <td>chromadb, sentence-transformers</td>
+      </tr>
+      <tr>
+        <td>RAG</td>
+        <td><code>finai/rag/rag_chain.py</code></td>
+        <td>Context retrieval + LLM generation + citations</td>
+        <td>openai, anthropic</td>
+      </tr>
+      <tr>
+        <td>Monitoring</td>
+        <td><code>finai/monitoring/drift_detector.py</code></td>
+        <td>KS-test + PSI per feature</td>
+        <td>scipy, numpy</td>
+      </tr>
+      <tr>
+        <td>Monitoring</td>
+        <td><code>finai/monitoring/performance_tracker.py</code></td>
+        <td>Rolling accuracy &amp; AUC snapshots</td>
+        <td>scikit-learn, pandas</td>
+      </tr>
+      <tr>
+        <td>Dashboard</td>
+        <td><code>finai/dashboard/app.py</code> + <code>pages/</code></td>
+        <td>5-page Streamlit UI</td>
+        <td>streamlit 1.43, plotly 5.24</td>
+      </tr>
+      <tr>
+        <td>Config</td>
+        <td><code>finai/config/settings.py</code></td>
+        <td>Pydantic config + .env loading</td>
+        <td>pydantic, python-dotenv</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  FinAI — AI-Powered Financial Intelligence Platform &nbsp;·&nbsp; Architecture Diagram
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "dark",
+    themeVariables: {
+      primaryColor: "#1e3a5f",
+      primaryTextColor: "#e6edf3",
+      primaryBorderColor: "#4a9eff",
+      lineColor: "#58a6ff",
+      secondaryColor: "#161b22",
+      tertiaryColor: "#1a3d2b",
+      background: "#0d1117",
+      mainBkg: "#161b22",
+      nodeBorder: "#30363d",
+      clusterBkg: "#0d1117",
+      titleColor: "#e6edf3",
+      edgeLabelBackground: "#161b22",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    },
+    flowchart: {
+      curve: "basis",
+      padding: 20,
+      nodeSpacing: 50,
+      rankSpacing: 60
+    }
+  });
+</script>
+</body>
+</html>
