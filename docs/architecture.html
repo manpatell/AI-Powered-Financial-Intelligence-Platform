@@ -248,8 +248,7 @@
       min-width: 140px;
     }
 
-    .pipe-step .icon { font-size: 1.3rem; }
-    .pipe-step .label { font-size: 0.78rem; font-weight: 600; margin-top: 0.25rem; }
+    .pipe-step .label { font-size: 0.78rem; font-weight: 600; }
     .pipe-step .sub   { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
 
     .pipe-arrow {
@@ -383,7 +382,7 @@ flowchart TB
 <div class="layers">
 
   <div class="layer ext">
-    <h3>🌐 External Data Sources</h3>
+    <h3>External Data Sources</h3>
     <div class="components">
       <div class="component">
         <div class="name">Yahoo Finance (yfinance)</div>
@@ -401,7 +400,7 @@ flowchart TB
   </div>
 
   <div class="layer ingestion">
-    <h3>📥 Data Ingestion  ·  finai/data/</h3>
+    <h3>Data Ingestion  ·  finai/data/</h3>
     <div class="components">
       <div class="component">
         <div class="name">stock_fetcher.py</div>
@@ -419,7 +418,7 @@ flowchart TB
   </div>
 
   <div class="layer storage">
-    <h3>🗄️ Storage</h3>
+    <h3>Storage</h3>
     <div class="components">
       <div class="component">
         <div class="name">Cache Store</div>
@@ -445,7 +444,7 @@ flowchart TB
   </div>
 
   <div class="layer features">
-    <h3>⚙️ Feature Engineering  ·  finai/features/</h3>
+    <h3>Feature Engineering  ·  finai/features/</h3>
     <div class="components">
       <div class="component">
         <div class="name">technical_indicators.py</div>
@@ -467,7 +466,7 @@ flowchart TB
   </div>
 
   <div class="layer ml">
-    <h3>🤖 ML Pipeline  ·  finai/models/</h3>
+    <h3>ML Pipeline  ·  finai/models/</h3>
     <div class="components">
       <div class="component">
         <div class="name">XGBoost Classifier</div>
@@ -497,7 +496,7 @@ flowchart TB
   </div>
 
   <div class="layer mlops">
-    <h3>📊 MLOps  ·  MLflow</h3>
+    <h3>MLOps  ·  MLflow</h3>
     <div class="components">
       <div class="component">
         <div class="name">MLflow Tracking Server  (port 5000)</div>
@@ -511,7 +510,7 @@ flowchart TB
   </div>
 
   <div class="layer rag">
-    <h3>🧠 RAG Pipeline  ·  finai/rag/</h3>
+    <h3>RAG Pipeline  ·  finai/rag/</h3>
     <div class="components">
       <div class="component">
         <div class="name">Sentence Transformers</div>
@@ -533,7 +532,7 @@ flowchart TB
   </div>
 
   <div class="layer monitor">
-    <h3>🔍 Monitoring  ·  finai/monitoring/</h3>
+    <h3>Monitoring  ·  finai/monitoring/</h3>
     <div class="components">
       <div class="component">
         <div class="name">drift_detector.py</div>
@@ -547,7 +546,7 @@ flowchart TB
   </div>
 
   <div class="layer dash">
-    <h3>🖥️ Streamlit Dashboard  ·  port 8501</h3>
+    <h3>Streamlit Dashboard  ·  port 8501</h3>
     <div class="components">
       <div class="component">
         <div class="name">Home — Market Snapshot</div>
@@ -577,7 +576,7 @@ flowchart TB
   </div>
 
   <div class="layer cfg">
-    <h3>🔧 Cross-Cutting</h3>
+    <h3>Cross-Cutting</h3>
     <div class="components">
       <div class="component">
         <div class="name">config/settings.py</div>
@@ -601,49 +600,41 @@ flowchart TB
   <h2>End-to-End Data Flow</h2>
   <div class="pipeline-flow">
     <div class="pipe-step">
-      <div class="icon">🌐</div>
       <div class="label">External APIs</div>
       <div class="sub">yfinance · NewsAPI · RSS</div>
     </div>
-    <div class="pipe-arrow">→</div>
+    <div class="pipe-arrow">-&gt;</div>
     <div class="pipe-step">
-      <div class="icon">📥</div>
       <div class="label">Ingestion + Cache</div>
       <div class="sub">TTL-aware · retry logic</div>
     </div>
-    <div class="pipe-arrow">→</div>
+    <div class="pipe-arrow">-&gt;</div>
     <div class="pipe-step">
-      <div class="icon">⚙️</div>
       <div class="label">Feature Engineering</div>
       <div class="sub">25 indicators + FinBERT</div>
     </div>
-    <div class="pipe-arrow">→</div>
+    <div class="pipe-arrow">-&gt;</div>
     <div class="pipe-step">
-      <div class="icon">📊</div>
       <div class="label">Feature Store</div>
       <div class="sub">Scaled Parquet</div>
     </div>
-    <div class="pipe-arrow">→</div>
+    <div class="pipe-arrow">-&gt;</div>
     <div class="pipe-step">
-      <div class="icon">🤖</div>
       <div class="label">ML Training</div>
       <div class="sub">XGB + LGBM + Optuna</div>
     </div>
-    <div class="pipe-arrow">→</div>
+    <div class="pipe-arrow">-&gt;</div>
     <div class="pipe-step">
-      <div class="icon">📈</div>
       <div class="label">Signals</div>
       <div class="sub">BUY / HOLD / SELL</div>
     </div>
-    <div class="pipe-arrow">↘</div>
+    <div class="pipe-arrow">-&gt;</div>
     <div class="pipe-step">
-      <div class="icon">🧠</div>
       <div class="label">RAG Chain</div>
       <div class="sub">ChromaDB + LLM</div>
     </div>
-    <div class="pipe-arrow">→</div>
+    <div class="pipe-arrow">-&gt;</div>
     <div class="pipe-step">
-      <div class="icon">🖥️</div>
       <div class="label">Dashboard</div>
       <div class="sub">Streamlit port 8501</div>
     </div>
@@ -678,7 +669,7 @@ flowchart TB
       <tr>
         <td>Feature Eng.</td>
         <td><code>finai/features/technical_indicators.py</code></td>
-        <td>25+ indicators (RSI, MACD, BBands, ATR…)</td>
+        <td>25+ indicators (RSI, MACD, BBands, ATR, ...)</td>
         <td>ta, pandas, numpy</td>
       </tr>
       <tr>
